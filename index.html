@@ -127,7 +127,12 @@
 </main>
 
 <footer>Keep this page bookmarked. Always open the portal from here.</footer>
-
+<script>
+  window.onerror = function (message, source, line) {
+    var el = document.getElementById('msg');
+    if (el) { el.className = 'msg error'; el.textContent = 'Page error: ' + message + ' (line ' + line + ')'; }
+  };
+</script>
 <script>
   // ------------------------------------------------------------------
   // SETTINGS: change these two values only
