@@ -204,7 +204,11 @@
       shape: 'rectangular',
       width: 300
     });
-
+    setTimeout(function () {
+      if (!document.getElementById('gbtn').children.length) {
+        showMessage('The Google button did not load. Google may not accept this page address yet. Check Authorized JavaScript origins in Google Cloud.', true);
+      }
+    }, 4000);
     if (signedOut) {
       google.accounts.id.disableAutoSelect();
       showMessage('You have signed out.');
