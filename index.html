@@ -96,7 +96,6 @@
   footer { text-align: center; font-size: 13px; color: var(--muted); padding: 0 16px 24px; }
   a { color: var(--green-dark); }
   :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -126,20 +125,18 @@
   </section>
 </main>
 
-<footer>Keep this page bookmarked. Always open the portal from here.</footer>
+<footer>Keep this page bookmarked. Always open the portal from here. (Page version 5)</footer>
+
 <script>
   window.onerror = function (message, source, line) {
     var el = document.getElementById('msg');
     if (el) { el.className = 'msg error'; el.textContent = 'Page error: ' + message + ' (line ' + line + ')'; }
   };
 </script>
+
 <script>
-  // ------------------------------------------------------------------
-  // SETTINGS: change these two values only
-  // ------------------------------------------------------------------
   var CLIENT_ID = '920703411991-6h6iroq1v3q9v0lurgek8r3vush8hcfa.apps.googleusercontent.com';
-    var EXEC_URL  = 'https://script.google.com/macros/s/AKfycbyJoNnylfZlTfnWwNUTbytF9F3uPfenSapfcpl-bR3w69s7G_OKIhIPVHm3iZaj07Fu/exec'; // the web app link that ends with /exec
-  // ------------------------------------------------------------------
+  var EXEC_URL  = 'https://script.google.com/macros/s/AKfycbyJoNnylfZlTfnWwNUTbytF9F3uPfenSapfcpl-bR3w69s7G_OKIhIPVHm3iZaj07Fu/exec';
 
   var ALLOWED_NEXT = ['home', 'guarantor', 'review', 'loans'];
 
@@ -174,7 +171,7 @@
 
   var attempts = 0;
   function startGoogle() {
-    if (EXEC_URL.indexOf('https://script.google.com/macros/s/AKfycbyJoNnylfZlTfnWwNUTbytF9F3uPfenSapfcpl-bR3w69s7G_OKIhIPVHm3iZaj07Fu/exec') === 0) {
+    if (EXEC_URL.indexOf('https://script.google.com/') !== 0) {
       showMessage('This page is not set up yet: the portal link is missing in index.html.', true);
       return;
     }
