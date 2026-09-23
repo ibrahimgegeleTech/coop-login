@@ -1,1 +1,214 @@
-"Login page coming soon"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NHC Co-operative Society | Sign in</title>
+<meta name="robots" content="noindex">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --ink: #14261e;
+    --muted: #4f625a;
+    --green: #1e5a46;
+    --green-dark: #143f31;
+    --gold: #c28e1f;
+    --paper: #f2f6f4;
+    --card: #ffffff;
+    --line: #d5e0db;
+    --error: #a12a2a;
+    --error-bg: #fbeeee;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  .band {
+    background: var(--green);
+    color: #fff;
+    padding: 28px 20px 64px;
+    border-bottom: 5px solid var(--gold);
+  }
+  .band-inner { max-width: 440px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+  .mark {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: #fff; color: var(--green);
+    display: grid; place-items: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700; font-size: 17px; letter-spacing: 0.5px;
+    flex: none;
+  }
+  .band h1 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.2;
+  }
+  .band p { margin: 2px 0 0; font-size: 14px; opacity: 0.85; }
+  main { flex: 1; padding: 0 16px 32px; }
+  .card {
+    max-width: 440px;
+    margin: -40px auto 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px 24px 24px;
+    box-shadow: 0 6px 24px rgba(20, 38, 30, 0.08);
+  }
+  .card h2 {
+    margin: 0 0 8px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24px;
+    line-height: 1.25;
+  }
+  .lead { margin: 0 0 22px; color: var(--muted); font-size: 16px; line-height: 1.5; }
+  #gbtn { min-height: 44px; display: flex; justify-content: flex-start; }
+  .msg {
+    margin: 18px 0 0;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--muted);
+    min-height: 22px;
+  }
+  .msg.error {
+    color: var(--error);
+    background: var(--error-bg);
+    border-left: 4px solid var(--error);
+    padding: 10px 12px;
+    border-radius: 4px;
+  }
+  .help {
+    margin: 22px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .help strong { color: var(--ink); }
+  footer { text-align: center; font-size: 13px; color: var(--muted); padding: 0 16px 24px; }
+  a { color: var(--green-dark); }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="band">
+  <div class="band-inner">
+    <div class="mark" aria-hidden="true">NHC</div>
+    <div>
+      <h1>NHC Co-operative Society</h1>
+      <p>Members and officials portal</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card" aria-labelledby="title">
+    <h2 id="title">Sign in to your account</h2>
+    <p class="lead">Use the Google account you registered with the society.</p>
+
+    <div id="gbtn"></div>
+    <p id="msg" class="msg" role="status" aria-live="polite"></p>
+
+    <p class="help">
+      <strong>Not registered yet?</strong> Ask a society official to add your email address,
+      then sign in with that same Google account.
+    </p>
+  </section>
+</main>
+
+<footer>Keep this page bookmarked. Always open the portal from here.</footer>
+
+<script>
+  // ------------------------------------------------------------------
+  // SETTINGS: change these two values only
+  // ------------------------------------------------------------------
+  var CLIENT_ID = '920703411991-6h6iroq1v3q9v0lurgek8r3vush8hcfa.apps.googleusercontent.com';
+  var EXEC_URL  = 'https://script.google.com/macros/s/AKfycbw8HouyEGAAWnVVf4WlMg1W4cnC7bEkoaXr2xcEQypgrFTgcNYaWz4NhYsrmgbSmFOd5A/exec'; // the web app link that ends with /exec
+  // ------------------------------------------------------------------
+
+  var ALLOWED_NEXT = ['home', 'guarantor', 'review', 'loans'];
+
+  var params   = new URLSearchParams(window.location.search);
+  var nextView = params.get('next') || '';
+  var reqId    = params.get('req') || '';
+  var signedOut = params.get('signedout') === '1';
+
+  var msgEl = document.getElementById('msg');
+
+  function showMessage(text, isError) {
+    msgEl.textContent = text || '';
+    msgEl.className = 'msg' + (isError ? ' error' : '');
+  }
+
+  function buildTargetUrl(credential) {
+    var q = new URLSearchParams();
+    q.set('idt', credential);
+    if (ALLOWED_NEXT.indexOf(nextView) !== -1) q.set('next', nextView);
+    if (/^[A-Za-z0-9_-]{1,40}$/.test(reqId)) q.set('req', reqId);
+    return EXEC_URL + (EXEC_URL.indexOf('?') === -1 ? '?' : '&') + q.toString();
+  }
+
+  function handleCredential(response) {
+    if (!response || !response.credential) {
+      showMessage('Sign-in did not finish. Tap the button to try again.', true);
+      return;
+    }
+    showMessage('Signed in. Opening your dashboard...');
+    window.location.replace(buildTargetUrl(response.credential));
+  }
+
+  var attempts = 0;
+  function startGoogle() {
+    if (EXEC_URL.indexOf(https://script.google.com/macros/s/AKfycbw8HouyEGAAWnVVf4WlMg1W4cnC7bEkoaXr2xcEQypgrFTgcNYaWz4NhYsrmgbSmFOd5A/exec) === 0) {
+      showMessage('This page is not set up yet: the portal link is missing in index.html.', true);
+      return;
+    }
+    if (!(window.google && google.accounts && google.accounts.id)) {
+      attempts++;
+      if (attempts > 60) {
+        showMessage('Google Sign-In could not load. Check your internet connection and reload this page.', true);
+        return;
+      }
+      setTimeout(startGoogle, 150);
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: handleCredential,
+      auto_select: !signedOut,
+      cancel_on_tap_outside: false,
+      itp_support: true
+    });
+
+    google.accounts.id.renderButton(document.getElementById('gbtn'), {
+      type: 'standard',
+      theme: 'filled_blue',
+      size: 'large',
+      text: 'signin_with',
+      shape: 'rectangular',
+      width: 300
+    });
+
+    if (signedOut) {
+      google.accounts.id.disableAutoSelect();
+      showMessage('You have signed out.');
+    } else {
+      google.accounts.id.prompt();
+    }
+  }
+
+  window.addEventListener('load', startGoogle);
+</script>
+</body>
+</html>
