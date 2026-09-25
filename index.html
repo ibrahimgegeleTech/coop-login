@@ -148,9 +148,17 @@ var SESSION_KEY = 'coop_session';
   var reqId    = params.get('req') || '';
   var signedOut = params.get('signedout') === '1';
 
-  var msgEl = document.getElementById('msg');
+var msgEl = document.getElementById('msg');
+  var sessionFromRedirect = params.get('session');
+  var signinFailed = params.get('signinfailed') === '1';
+
   if (signedOut) {
     try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+  } else if (sessionFromRedirect) {
+    try { localStorage.setItem(SESSION_KEY, sessionFromRedirect); } catch (e) {}
+    window.location.replace(buildTargetUrl(null, sessionFromRedirect));
+  } else if (signinFailed) {
+    showMessage('Sign-in failed. Please try again.', true);
   } else {
     var savedSession = null;
     try { savedSession = localStorage.getItem(SESSION_KEY); } catch (e) {}
@@ -171,23 +179,18 @@ var SESSION_KEY = 'coop_session';
     return EXEC_URL + (EXEC_URL.indexOf('?') === -1 ? '?' : '&') + q.toString();
   }
 
-  function handleCredential(response) {
+function handleCredential(response) {
     if (!response || !response.credential) {
       showMessage('Sign-in did not finish. Tap the button to try again.', true);
       return;
     }
     showMessage('Signed in. Opening your dashboard...');
-    fetch(EXEC_URL + (EXEC_URL.indexOf('?') === -1 ? '?' : '&') +
-          'action=createSession&idt=' + encodeURIComponent(response.credential))
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (!d.ok) { showMessage('Sign-in failed. Please try again.', true); return; }
-        try { localStorage.setItem(SESSION_KEY, d.session); } catch (e) {}
-        window.location.replace(buildTargetUrl(null, d.session));
-      })
-      .catch(function () {
-        showMessage('Could not reach the portal. Check your connection and try again.', true);
-      });
+    var q = new URLSearchParams();
+    q.set('action', 'createSession');
+    q.set('idt', response.credential);
+    if (ALLOWED_NEXT.indexOf(nextView) !== -1) q.set('next', nextView);
+    if (/^[A-Za-z0-9_-]{1,40}$/.test(reqId)) q.set('req', reqId);
+    window.location.replace(EXEC_URL + (EXEC_URL.indexOf('?') === -1 ? '?' : '&') + q.toString());
   }
 
   var attempts = 0;
