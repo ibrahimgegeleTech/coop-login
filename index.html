@@ -192,10 +192,10 @@ var SESSION_KEY = 'coop_session';
 
   var attempts = 0;
   function startGoogle() {
-    if (EXEC_URL.indexOf('https://script.google.com/macros/s/AKfycbyJoNnylfZlTfnWwNUTbytF9F3uPfenSapfcpl-bR3w69s7G_OKIhIPVHm3iZaj07Fu/exec') === 0) {
-      showMessage('This page is not set up yet: the portal link is missing in index.html.', true);
-      return;
-    }
+  if (EXEC_URL.indexOf('https://script.google.com/') !== 0) {
+  showMessage('This page is not set up yet: the portal link is missing in index.html.', true);
+  return;
+}
     if (!(window.google && google.accounts && google.accounts.id)) {
       attempts++;
       if (attempts > 60) {
