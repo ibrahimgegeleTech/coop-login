@@ -185,12 +185,23 @@ function handleCredential(response) {
       return;
     }
     showMessage('Signed in. Opening your dashboard...');
-    var q = new URLSearchParams();
-    q.set('action', 'createSession');
-    q.set('idt', response.credential);
-    if (ALLOWED_NEXT.indexOf(nextView) !== -1) q.set('next', nextView);
-    if (/^[A-Za-z0-9_-]{1,40}$/.test(reqId)) q.set('req', reqId);
-    window.location.replace(EXEC_URL + (EXEC_URL.indexOf('?') === -1 ? '?' : '&') + q.toString());
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = EXEC_URL;
+
+    function field(name, value) {
+      var el = document.createElement('input');
+      el.type = 'hidden'; el.name = name; el.value = value;
+      form.appendChild(el);
+    }
+    field('action', 'createSession');
+    field('idt', response.credential);
+    if (ALLOWED_NEXT.indexOf(nextView) !== -1) field('next', nextView);
+    if (/^[A-Za-z0-9_-]{1,40}$/.test(reqId)) field('req', reqId);
+
+    document.body.appendChild(form);
+    form.submit();
   }
 
   var attempts = 0;
