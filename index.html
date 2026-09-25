@@ -96,6 +96,7 @@
   footer { text-align: center; font-size: 13px; color: var(--muted); padding: 0 16px 24px; }
   a { color: var(--green-dark); }
   :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -125,36 +126,46 @@
   </section>
 </main>
 
-<footer>Keep this page bookmarked. Always open the portal from here. (Page version 5)</footer>
-
+<footer>Keep this page bookmarked. Always open the portal from here.</footer>
 <script>
   window.onerror = function (message, source, line) {
     var el = document.getElementById('msg');
     if (el) { el.className = 'msg error'; el.textContent = 'Page error: ' + message + ' (line ' + line + ')'; }
   };
 </script>
-
 <script>
+  // ------------------------------------------------------------------
+  // SETTINGS: change these two values only
+  // ------------------------------------------------------------------
   var CLIENT_ID = '920703411991-6h6iroq1v3q9v0lurgek8r3vush8hcfa.apps.googleusercontent.com';
-  var EXEC_URL  = 'https://script.google.com/macros/s/AKfycbyJoNnylfZlTfnWwNUTbytF9F3uPfenSapfcpl-bR3w69s7G_OKIhIPVHm3iZaj07Fu/exec';
+    var EXEC_URL  = 'https://script.google.com/macros/s/AKfycbyJoNnylfZlTfnWwNUTbytF9F3uPfenSapfcpl-bR3w69s7G_OKIhIPVHm3iZaj07Fu/exec'; // the web app link that ends with /exec
+  // ------------------------------------------------------------------
 
   var ALLOWED_NEXT = ['home', 'guarantor', 'review', 'loans'];
-
+var SESSION_KEY = 'coop_session';
   var params   = new URLSearchParams(window.location.search);
   var nextView = params.get('next') || '';
   var reqId    = params.get('req') || '';
   var signedOut = params.get('signedout') === '1';
 
   var msgEl = document.getElementById('msg');
-
+  if (signedOut) {
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+  } else {
+    var savedSession = null;
+    try { savedSession = localStorage.getItem(SESSION_KEY); } catch (e) {}
+    if (savedSession) {
+      window.location.replace(buildTargetUrl(null, savedSession));
+    }
+  }
   function showMessage(text, isError) {
     msgEl.textContent = text || '';
     msgEl.className = 'msg' + (isError ? ' error' : '');
   }
 
-  function buildTargetUrl(credential) {
+  function buildTargetUrl(credential, session) {
     var q = new URLSearchParams();
-    q.set('idt', credential);
+    if (session) { q.set('session', session); } else { q.set('idt', credential); }
     if (ALLOWED_NEXT.indexOf(nextView) !== -1) q.set('next', nextView);
     if (/^[A-Za-z0-9_-]{1,40}$/.test(reqId)) q.set('req', reqId);
     return EXEC_URL + (EXEC_URL.indexOf('?') === -1 ? '?' : '&') + q.toString();
@@ -166,12 +177,22 @@
       return;
     }
     showMessage('Signed in. Opening your dashboard...');
-    window.location.replace(buildTargetUrl(response.credential));
+    fetch(EXEC_URL + (EXEC_URL.indexOf('?') === -1 ? '?' : '&') +
+          'action=createSession&idt=' + encodeURIComponent(response.credential))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { showMessage('Sign-in failed. Please try again.', true); return; }
+        try { localStorage.setItem(SESSION_KEY, d.session); } catch (e) {}
+        window.location.replace(buildTargetUrl(null, d.session));
+      })
+      .catch(function () {
+        showMessage('Could not reach the portal. Check your connection and try again.', true);
+      });
   }
 
   var attempts = 0;
   function startGoogle() {
-    if (EXEC_URL.indexOf('https://script.google.com/') !== 0) {
+    if (EXEC_URL.indexOf('https://script.google.com/macros/s/AKfycbyJoNnylfZlTfnWwNUTbytF9F3uPfenSapfcpl-bR3w69s7G_OKIhIPVHm3iZaj07Fu/exec') === 0) {
       showMessage('This page is not set up yet: the portal link is missing in index.html.', true);
       return;
     }
